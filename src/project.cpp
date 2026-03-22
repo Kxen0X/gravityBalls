@@ -10,12 +10,7 @@ Project::Project(){
 	this->state = State::GAME;
 	this->window = new sf::RenderWindow(sf::VideoMode::getDesktopMode(), "Gravity Balls", sf::Style::None);
 	this->centr = { 1000, 500 };
-	Arc temp = this->createArc(500, this->centr, 490, 500, 380, 0);
-	this->arcs.push_back(temp);
-	temp = this->createArc(500, this->centr, 430, 440, 320, 0);
-	this->arcs.push_back(temp);
-	temp = this->createArc(500, this->centr, 370, 380, 280, 0);
-	this->arcs.push_back(temp);
+	
 	this->countOfCircles = 0;
 	this->maxCountOfCircles = 1;
 	this->gravity = 700;
@@ -23,6 +18,7 @@ Project::Project(){
 	this->RGBTimer = 0;
 	this->sword.loadFromFile("../resources/sword2.png");
 	
+	this->areArcsExists = 0;
 	this->swordSprite1 = new sf::Sprite(this->sword);
 	this->swordSprite1->setScale({ 2, 2 });
 	this->font.openFromFile("../resources/VeniteAdoremus-rgRBA.ttf");
@@ -89,7 +85,7 @@ void Project::eventUpdate()
 			}
 			if (k->scancode == sf::Keyboard::Scancode::B) {
 				for (auto& circle : this->circles) {
-					circle.velocity = sf::Vector2f(getRandom(-500.f, 500.f), getRandom(-500.f, 500.f));
+					circle.velocity = sf::Vector2f(getRandom(500.f, 1000.f), getRandom(500.f, 1000.f));
 				}
 			}
 		}
@@ -105,6 +101,19 @@ void Project::eventUpdate()
 			}
 		}
 	}
+}
+
+void Project::arcsGeneration(int count, int radius1, int radius2, sf::Vector2f centr, float BaseAngle, int point)
+{
+	while (count) {
+		this->arcs.push_back(this->createArc(point, centr, radius1, radius2, BaseAngle));
+		radius1 -= 20;
+		radius2 -= 20;
+		BaseAngle -= 1;
+
+		count--;
+	}
+	this->areArcsExists = 1;
 }
 
 void Project::updateInEnd(){
@@ -170,7 +179,8 @@ void Project::renderInMenu() {
 
 void Project::renderInGame()
 {
-	this->window->clear(sf::Color(101, 101, 101));
+	//this->window->clear(sf::Color(101, 101, 101));
+	this->window->clear();
 	for (auto& el : this->circles) {
 		this->window->draw(el.ball);
 		//this->window->draw(el.swordBorders);
@@ -193,15 +203,7 @@ void Project::createCircle(int radius)
 	circle.ball.setFillColor(col);
 	circle.ball.setOrigin({ (float)radius, (float)radius });
 	circle.ball.setPointCount(512);
-	circle.position = { 900, 100};
-	/*circle.sword = this->swordSprite1;
-	circle.swordBorders = this->swordBorders;
-	circle.swordBorders.setPosition({ circle.position.x+100, circle.position.y - 131 });
-	circle.swordBorders.setSize({30, 181});
-	circle.swordBorders.setRotation(sf::degrees(30));
-	circle.swordBorders.setFillColor(sf::Color::Blue);*/
-	//circle.swordBorders.setTexture(&this->sword);
-	//circle.swordBorders.setTextureRect(sf::IntRect({10, 0}, {35, 65}));
+	circle.position = {(float)this->window->getSize().x / 2, (float)this->window->getSize().y / 2};
 	this->countOfCircles++;
 	this->circles.push_back(circle);
 
@@ -209,7 +211,7 @@ void Project::createCircle(int radius)
 
 }
 
-Arc Project::createArc(int point, sf::Vector2f centr, int radius1, int radius2, float BaseAngle, float raz)
+Arc Project::createArc(int point, sf::Vector2f centr, int radius1, int radius2, float BaseAngle)
 {
 	sf::VertexArray arc(sf::PrimitiveType::TriangleStrip, 2 * point);
 	Arc realArc;
@@ -219,9 +221,11 @@ Arc Project::createArc(int point, sf::Vector2f centr, int radius1, int radius2, 
 	realArc.centr = centr;
 
 	int idx = 0;
-	for (int i = 0; i < point; i++) {
-		float angle = (0 + BaseAngle * i / (point + 1)) * 3.1415926f / 180.f;
 
+	float toTopAngle = 90.f - BaseAngle / 2;
+	for (int i = 0; i < point; i++) {
+		float angle = (BaseAngle * i / (point - 1)) * 3.1415926f / 180.f;
+		
 		float x1 = centr.x + radius1 * std::cos(angle);
 		float y1 = centr.y + radius1 * std::sin(angle);
 
@@ -236,10 +240,10 @@ Arc Project::createArc(int point, sf::Vector2f centr, int radius1, int radius2, 
 		idx++;
 	}
 	
-	realArc.currentRotationAngle = 0;
+	realArc.currentRotationAngle = toTopAngle;
 	realArc.arc = arc;
-	realArc.idx = this->i;
-	this->i ++;
+	realArc.idx = this->i++;
+	
 	return realArc;
 }
 
@@ -281,13 +285,15 @@ sf::Color Project::getRGBColor(int h)
 void Project::updateInGame() {
 	
 	this->deltatime = this->time.restart().asSeconds();
+	if (!this->areArcsExists) this->arcsGeneration(10, 490, 500, this->centr, 300, 720);
 	if (this->countOfCircles < this->maxCountOfCircles) this->createCircle(20);
 	this->arcRotation();
 	this->arcCollision();
 	//this->swordCollision();
 	this->ballsCollision();
+	this->arcDeletion();
 	//this->mouseCollision();
-	//this->setRGBColor();
+	this->setRGBColor();
 	
 
 
@@ -379,8 +385,8 @@ void Project::arcCollision()
 				bool isInsideArcSector = (arc.baseAngle >= 360.f) || (relativeAngle <= arc.baseAngle);
 				if (isInsideArcSector) {
 					float maxPenetration = arc.radius + circle.ball.getRadius() * 2.0f;
-					float minDist = arc.radius + circle.ball.getRadius();
-					if (dist < minDist && this->length(circle.lastPosition - arc.centr) >= arc.radius) {
+					float minDist = arc.radius2 + circle.ball.getRadius();
+					if (dist < minDist && this->length(circle.lastPosition - arc.centr) >= arc.radius2) {
 						sf::Vector2f normal = diff / dist;
 						circle.position = arc.centr + normal * minDist;
 
@@ -388,7 +394,7 @@ void Project::arcCollision()
 						if (scal < 0) {
 							circle.velocity -= (1.f + 1.f) * normal * scal;
 						}
-					
+
 					}
 					if (dist > maxDist && dist < maxPenetration && this->length(circle.lastPosition - arc.centr) < arc.radius) {
 						sf::Vector2f normal = -diff / dist;
@@ -400,42 +406,48 @@ void Project::arcCollision()
 						}
 
 					}
-					
-					
+
+
+
 				}
-				else if (arc.baseAngle < 360.f) {
+				else {
+					if (arc.baseAngle < 360.f) {
 
-					float startRad = arc.currentRotationAngle * 3.14159265f / 180.f;
-					sf::Vector2f edge1 = arc.centr + sf::Vector2f(std::cos(startRad), std::sin(startRad)) * arc.radius;
+						float startRad = arc.currentRotationAngle * 3.14159265f / 180.f;
+						sf::Vector2f edge1 = arc.centr + sf::Vector2f(std::cos(startRad), std::sin(startRad)) * arc.radius;
 
-					float endRad = (arc.currentRotationAngle + arc.baseAngle) * 3.14159265f / 180.f;
-					sf::Vector2f edge2 = arc.centr + sf::Vector2f(std::cos(endRad), std::sin(endRad)) * arc.radius;
-					
-					auto checkEdgeCollision = [&](sf::Vector2f edgePoint) {
-						sf::Vector2f d = circle.position - edgePoint;
-						float dLen = this->length(d);
+						float endRad = (arc.currentRotationAngle + arc.baseAngle) * 3.14159265f / 180.f;
+						sf::Vector2f edge2 = arc.centr + sf::Vector2f(std::cos(endRad), std::sin(endRad)) * arc.radius;
 
-						if (dLen < circle.ball.getRadius() && dLen != 0) {
-							sf::Vector2f normal = d / dLen;
-							circle.position = edgePoint + normal * circle.ball.getRadius();
+						auto checkEdgeCollision = [&](sf::Vector2f edgePoint) {
+							sf::Vector2f d = circle.position - edgePoint;
+							float dLen = this->length(d);
 
-							float scal = this->Scalar(circle.velocity, normal);
-							if (scal < 0) {
-								circle.velocity -= (1.f + 0.6f) * normal * scal;
+							if (dLen < circle.ball.getRadius() && dLen != 0) {
+								sf::Vector2f normal = d / dLen;
+								circle.position = edgePoint + normal * circle.ball.getRadius();
+
+								float scal = this->Scalar(circle.velocity, normal);
+								if (scal < 0) {
+									circle.velocity -= (1.f + 0.6f) * normal * scal;
+								}
 							}
-						}
-						};
+							};
 
-					checkEdgeCollision(edge1);
-					checkEdgeCollision(edge2);
+						checkEdgeCollision(edge1);
+						checkEdgeCollision(edge2);
+					}
+					if (dist > maxDist) arc.isBreaked = 1;
 				}
-
 				circle.ball.setPosition(circle.position);
 			}
 		}
 	}
 }
-
+void Project::arcDeletion()
+{
+	this->arcs.erase(std::remove_if(this->arcs.begin(), this->arcs.end(), [](Arc& arc) {return arc.isBreaked;}), this->arcs.end());
+}
 void Project::ballsCollision() {
 	for (int j = 0; j < this->circles.size(); j++) {
 		for (int k = j + 1; k < this->circles.size(); k++) {
@@ -487,7 +499,7 @@ void Project::ballsCollision() {
 void Project::arcRotation()
 {
 	for (auto& el : this->arcs) {
-		el.currentRotationAngle += 60 * this->deltatime * 3/el.idx;
+		el.currentRotationAngle += 3*this->deltatime * el.idx;
 		
 		if (el.currentRotationAngle >= 360.f) el.currentRotationAngle -= 360.f;
 	}

@@ -5,6 +5,7 @@
 #include <vector>
 #include <iostream>
 #include <random>
+#include <algorithm>
 #pragma once
 
 
@@ -20,6 +21,7 @@ struct Arc {
 	float baseAngle;
 	float currentRotationAngle;
 	int idx;
+	bool isBreaked = 0;
 };
 
 enum State {
@@ -55,7 +57,6 @@ private:
 	int i = 1;
 	State state = State::GAME;
 
-	// Menu part
 	sf::Font font;
 	sf::Text* text;
 	sf::Text* ButtonText;
@@ -64,7 +65,6 @@ private:
 	sf::RectangleShape exit;
 	sf::Vector2f MousePos;
 
-	// Game part
 	sf::Color getRGBColor(int);
 	void setRGBColor();
 
@@ -78,7 +78,7 @@ private:
 	void eventUpdate();
 
 
-	Arc createArc(int, sf::Vector2f, int, int, float, float);
+	Arc createArc(int, sf::Vector2f, int, int, float);
 	void createCircle(int);
 	
 	int countOfCircles;
@@ -105,7 +105,10 @@ private:
 	void mouseCollision();
 	void swordCollision();
 	void arcRotation();
-	// End part
+	void arcDeletion();
+	void arcsGeneration(int, int, int, sf::Vector2f, float, int);
+	bool areArcsExists;
+
 
 	sf::Text* youLose;
 	sf::Text* timerText;
