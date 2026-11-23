@@ -1,16 +1,17 @@
 # Gravity Balls
 
-A C++ physics playground built with SFML 3. A ball falls under gravity and bounces against rotating circular arcs. The project explores collision detection, vector math, and real-time rendering.
+A C++ physics playground built with SFML 3. A ball falls under gravity, bounces against rotating circular arcs, and breaks through their openings. The project explores collision detection, vector math, and real-time rendering.
 
 ## Features
 
 - Gravity-based motion with frame-time updates and ten physics substeps per frame.
 - Collision response against the inner and outer sides of arcs, including their endpoints.
 - Ball-to-ball collision handling when multiple balls are enabled in the source.
-- Three rotating arcs and a borderless window sized to the desktop.
+- Twenty generated arcs, rainbow color animation, and a borderless window sized to the desktop.
+- Collision and arc-break sound effects; escaped arcs are removed from the scene.
 - Keyboard control to randomize ball velocities.
 
-The current configuration starts directly in the simulation with **one ball**. Menu and end-screen code exists, but those branches are disabled in the main loop.
+The current configuration starts with **one ball** and a three-second pause before physics begins. The final development version is available in `main`.
 
 ## Controls
 
@@ -23,7 +24,7 @@ The current configuration starts directly in the simulation with **one ball**. M
 
 Requirements: a C++17 compiler, CMake **3.28+**, Git, and Ninja. On Windows, use a terminal configured for your C++ compiler, such as the Visual Studio Developer Command Prompt.
 
-CMake downloads and builds **SFML 3.0.2** through `FetchContent`; the first configuration needs internet access. The executable target is named `main`.
+CMake downloads and builds **SFML 3.0.2** through `FetchContent` and links the Graphics and Audio modules; the first configuration needs internet access. The executable target is named `main`.
 
 ```sh
 git clone https://github.com/Kxen0X/gravityBalls.git
@@ -36,7 +37,7 @@ On Debian/Ubuntu, SFML also needs its native development dependencies. The repos
 
 ## Run
 
-Start the executable **with `build/bin` as the working directory**. The application uses paths such as `../resources/sword2.png`; CMake copies the resource directory into `build/resources`.
+Start the executable **with `build/bin` as the working directory**. The application uses paths such as `../resources/crack.mp3`; CMake copies the resource directory into `build/resources`.
 
 Linux/macOS:
 
@@ -52,7 +53,7 @@ Set-Location build/bin
 .\main.exe
 ```
 
-If using an IDE or another CMake generator, set the working directory explicitly. Running from a different directory can prevent textures and fonts from loading.
+If using an IDE or another CMake generator, set the working directory explicitly. Running from a different directory can prevent the sound files from loading. Keep both `crack.mp3` and `touch.mp3` available: the current code does not safely handle failed audio loading.
 
 ## Explore the code
 
@@ -62,9 +63,9 @@ If using an IDE or another CMake generator, set the working directory explicitly
 | [src/project.cpp](src/project.cpp) | Rendering loop, input, motion, and collision response |
 | [headers/project.h](headers/project.h) | `Project`, `Ball`, and `Arc` definitions |
 | [CMakeLists.txt](CMakeLists.txt) | SFML dependency, executable, and resource copying |
-| [resources](resources) | Textures, font, and other assets |
+| [resources](resources) | Collision and arc-break audio |
 
-To experiment, edit `maxCountOfCircles`, `gravity`, and the `createArc(...)` calls in `Project::Project()`. Scene coordinates and UI positions are currently hard-coded, so smaller displays may not show the entire scene.
+To experiment, edit `maxCountOfCircles`, `gravity`, and the `arcsGeneration(...)` call in `updateInGame()`. Scene coordinates are currently hard-coded, so smaller displays may not show the entire scene.
 
 ## Project status
 

@@ -1,3 +1,4 @@
+#pragma once
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 #include <SFML/Window.hpp>
@@ -5,7 +6,8 @@
 #include <vector>
 #include <iostream>
 #include <random>
-#pragma once
+#include <algorithm>
+
 
 
 struct Arc {
@@ -20,22 +22,16 @@ struct Arc {
 	float baseAngle;
 	float currentRotationAngle;
 	int idx;
+	bool isBreaked = 0;
 };
 
-enum State {
-	MENU,
-	GAME,
-	END
-};
+
 
 struct Ball {
 	sf::CircleShape ball;
 	sf::Vector2f position;
 	sf::Vector2f lastPosition;
 	sf::Vector2f velocity;
-	int sw;
-	sf::Sprite* sword;
-	sf::RectangleShape swordBorders;
 };
 
 class Project {
@@ -53,18 +49,9 @@ public:
 	void renderInEnd();
 private:
 	int i = 1;
-	State state = State::GAME;
+	int k = 1;
 
-	// Menu part
-	sf::Font font;
-	sf::Text* text;
-	sf::Text* ButtonText;
-	sf::Text* ExitText;
-	sf::RectangleShape button;
-	sf::RectangleShape exit;
-	sf::Vector2f MousePos;
 
-	// Game part
 	sf::Color getRGBColor(int);
 	void setRGBColor();
 
@@ -78,7 +65,7 @@ private:
 	void eventUpdate();
 
 
-	Arc createArc(int, sf::Vector2f, int, int, float, float);
+	Arc createArc(int, sf::Vector2f, int, int, float);
 	void createCircle(int);
 	
 	int countOfCircles;
@@ -105,17 +92,20 @@ private:
 	void mouseCollision();
 	void swordCollision();
 	void arcRotation();
-	// End part
-
-	sf::Text* youLose;
-	sf::Text* timerText;
-	sf::Sprite* death;
-	sf::Texture* txt;
-	int timer;
-	sf::Clock out;
+	void arcDeletion();
+	void arcsGeneration(int, int, int, sf::Vector2f, float, int);
+	bool areArcsExists;
 
 
-	sf::Texture sword;
-	sf::Sprite* swordSprite1;
-	sf::RectangleShape swordBorders;
+
+
+	sf::SoundBuffer CrackBuffer;
+	sf::Sound* crack;
+	sf::SoundBuffer TouchBuffer;
+	sf::Sound* touch;
+
+	sf::Clock beginningTimer;
+	bool isStart = 1;
+	bool isEnded = 0;
+	
 };
